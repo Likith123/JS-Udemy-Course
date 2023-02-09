@@ -9,6 +9,7 @@ class DOMHelper{
         const element = document.getElementById(elementId);
         const destinationElement = document.querySelector(newDestinationSelector);
         destinationElement.append(element);
+        element.scrollIntoView({behavior: 'smooth'});
     }
 }
 
@@ -35,8 +36,8 @@ class Component{
 }
 
 class ToolTip extends Component{
-    constructor(closeNotifierFunc, text){
-        super();
+    constructor(closeNotifierFunc, text, hostElementId){
+        super(hostElementId);
         this.closeNotifier = closeNotifierFunc;
         this.text = text;
         this.create();
@@ -50,7 +51,21 @@ class ToolTip extends Component{
     create(){
         const toolTipElement = document.createElement('div');
         toolTipElement.className = 'card';
-        toolTipElement.textContent = this.text;
+        // toolTipElement.textContent = this.text;
+        const toolTipTemplate = document.querySelector('template');
+        const toolTipBody = document.importNode(toolTipTemplate.content, true);
+        toolTipBody.querySelector('p').textContent = this.text;
+        toolTipElement.append(toolTipBody);
+        const hostElPosLeft = this.hostElement.offsetLeft;
+        const hostElPosTop = this.hostElement.offsetTop;
+        const hostElHeight = this.hostElement.clientHeight;
+        const parentElementScrolling = this.hostElement.parentElement.scrollTop;
+
+        const x = hostElPosLeft + 20;
+        const y = hostElPosTop + hostElHeight - parentElementScrolling - 10;
+        toolTipElement.style.position = 'absolute';
+        toolTipElement.style.left = x + 'px';
+        toolTipElement.style.top = y + 'px';
         toolTipElement.addEventListener('click', this.closeToolTip);
         this.element = toolTipElement;
     }
@@ -72,7 +87,7 @@ class ProjectItem{
         const toolTipText = prjElement.dataset.extraInfo;
         const toolTip = new ToolTip(()=>{
             this.hasActiveToolTip = false;
-        },toolTipText);
+        },toolTipText, this.id);
         toolTip.attach();
         this.hasActiveToolTip = true;
     }
@@ -133,6 +148,16 @@ class App{
         const finishedProjectsList = new ProjectList('finished');
         activeProjectsList.setSwitchHandlerFunction(finishedProjectsList.addProject.bind(finishedProjectsList));
         finishedProjectsList.setSwitchHandlerFunction(activeProjectsList.addProject.bind(activeProjectsList));
+        //this.startAnalytics();
+        setTimeout(this.startAnalytics, 3000);
+        //document.getElementById('startAnalyticsBtn').addEventListener('click',this.startAnalytics);
+    }
+
+    static startAnalytics(){
+        const analyticsScript = document.createElement('script');
+        analyticsScript.src = 'assets/scripts/analytics.js';
+        analyticsScript.defer = true;
+        document.head.append(analyticsScript);
     }
 }
 
